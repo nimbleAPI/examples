@@ -1,0 +1,266 @@
+<api xmlns="http://ws.apache.org/ns/synapse" context="/nimbleAPI/examples/js/hello-world" name="hello-world">
+	<resource methods="GET" uri-template="/output-to-console" protocol="https">
+
+		<inSequence>
+
+			<!-- Execute the embedded JS using the script mediator,
+			 see: https://docs.wso2.com/display/ESB490/Script+Mediator -->
+			<script language="js">
+				print('hello world') // Print to console stdout
+			</script>
+
+			<!-- Send a HTTP response back to the client which sent
+			 the HTTP request, see https://docs.wso2.com/display/ESB490/Respond+Mediator
+			  -->
+			<respond/> 
+
+		</inSequence>
+
+		<outSequence>
+		</outSequence>
+
+		<faultSequence>
+		</faultSequence>
+	</resource>
+
+	<resource methods="GET" uri-template="/output-to-wso2carbon-log" protocol="https">
+
+		<inSequence>
+
+			<!-- Execute the embedded JS using the script mediator,
+			 see: https://docs.wso2.com/display/ESB490/Script+Mediator -->
+			<script language="js">
+				var log = mc.getServiceLog()
+				log.info('hello world')
+			</script>
+
+			<!-- Send a HTTP response back to the client which sent
+			 the HTTP request, see https://docs.wso2.com/display/ESB490/Respond+Mediator
+			  -->
+			<respond/> 
+
+		</inSequence>
+
+		<outSequence>
+		</outSequence>
+
+		<faultSequence>
+		</faultSequence>
+	</resource>
+
+	<resource methods="GET" uri-template="/send-response-body" protocol="https">
+
+		<inSequence>
+
+			<!-- Execute the embedded JS using the script mediator,
+			 see: https://docs.wso2.com/display/ESB490/Script+Mediator -->
+			<script language="js">
+				mc.setPayloadJSON('{"Message" : "hello world"}')
+			</script>
+
+			<!-- 	return 200 OK see, 
+			https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html -->
+			<property name="HTTP_SC" value="200" scope="axis2"/>
+
+	        <!-- Set the HTTP Content-Type header on the response message,
+	         so the client can interpret the type of response it receives,
+	         see https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+	          -->
+			<header name="Content-Type" value="application/json; charset=utf-8" scope="transport" />
+
+			<!-- WSO2 needs this to know to translate the "internal"
+			 message format into a JSON format during the Message Formatter step,
+			 see https://docs.wso2.com/display/ESB490/Working+with+Message+Builders+and+Formatters -->
+			<property name="messageType" value="application/json" scope="axis2"/>
+
+			<!-- Ensure the response payload is returned to the client, not just the headers, 
+			 see https://docs.wso2.com/display/ESB490/HTTP+Transport+Properties#HTTPTransportProperties-NO_ENTITY_BODY-->
+			<property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+
+			<!-- Send a HTTP response back to the client which sent the HTTP request,
+			 see https://docs.wso2.com/display/ESB490/Respond+Mediator -->
+			<respond/> 
+
+		</inSequence>
+
+		<outSequence>
+		</outSequence>
+
+		<faultSequence>
+		</faultSequence>
+	</resource>
+
+	<resource methods="GET" uri-template="/send-response-header" protocol="https">
+
+		<inSequence>
+
+			<!-- Execute the embedded JS using the script mediator, see: https://docs.wso2.com/display/ESB490/Script+Mediator -->
+			<script language="js">
+				mc.setProperty('myMessage', 'hello world')
+			</script>
+
+			<!-- Return 200 OK see, https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html -->
+			<property name="HTTP_SC" value="200" scope="axis2"/>
+
+			<!-- Use the header mediator to add a HTTP header, see: https://docs.wso2.com/display/ESB490/Header+Mediator -->
+			<header name="CustomHeaderWithMessage" expression="$ctx:myMessage" scope="transport" />
+
+			<!-- Send a HTTP response back to the client which sent the HTTP request, see https://docs.wso2.com/display/ESB490/Respond+Mediator -->
+			<respond/> 
+
+		</inSequence>
+
+		<outSequence>
+		</outSequence>
+
+		<faultSequence>
+		</faultSequence>
+	</resource>
+
+	<resource methods="GET" uri-template="/all-outputs" protocol="https">
+
+		<inSequence>
+
+			<!-- Execute the embedded JS using the script mediator, see: https://docs.wso2.com/display/ESB490/Script+Mediator -->
+			<script language="js"><![CDATA[
+				// Wrap the entire JS script content in an XML CDATA so that any XML reserved characters will not be interpreted as such,
+				//	see https://www.w3.org/TR/REC-xml/#sec-cdata-sect
+
+				// Print to console stdout
+				print('hello world') 
+				
+				// Write to wso2carbon.log
+				var log = mc.getServiceLog()
+				log.info('hello world')
+
+				// Set message payload for response
+				mc.setPayloadJSON('{"Message" : "hello world"}')
+				
+				// Set a property to be used as a HTTP header on the response
+				mc.setProperty('myMessage', 'hello world')
+
+			]]></script>
+
+	        <!-- Create a custom HTTP response header called "CustomHeaderWithMessage" and use the value of the property set in the JS as the value for the header -->
+			<header name="CustomHeaderWithMessage" expression="$ctx:myMessage" scope="transport"/>
+
+	        <!-- Set the HTTP Content-Type header on the response message, so the client can interpret the type of response it receives,
+	        	see https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html -->
+			<header name="Content-Type" value="application/json; charset=utf-8" scope="transport" />
+
+			<!-- WSO2 needs this to know to translate the "internal" message format into a JSON format during the Message Formatter step,
+				see https://docs.wso2.com/display/ESB490/Working+with+Message+Builders+and+Formatters -->
+			<property name="messageType" value="application/json" scope="axis2"/>
+
+			<!-- Ensure the response payload is returned to the client, not just the headers, 
+				see https://docs.wso2.com/display/ESB490/HTTP+Transport+Properties#HTTPTransportProperties-NO_ENTITY_BODY-->
+			<property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+
+			<!-- Send a HTTP response back to the client which sent the HTTP request, see https://docs.wso2.com/display/ESB490/Respond+Mediator -->
+			<respond/> 
+
+		</inSequence>
+
+		<outSequence>
+		</outSequence>
+
+		<faultSequence>
+		</faultSequence>
+	</resource>
+
+	<resource methods="GET" uri-template="/all-outputs-with-error-handling" protocol="https">
+
+		<inSequence>
+
+			<!-- Execute the embedded JS using the script mediator, see: https://docs.wso2.com/display/ESB490/Script+Mediator -->
+			<script language="js"><![CDATA[
+				// Wrap the entire JS script content in an XML CDATA so that any XML reserved characters will not be interpreted as such,
+				//	see https://www.w3.org/TR/REC-xml/#sec-cdata-sect
+
+				// Wrap the JS code in a try/catch block for error handling
+				//	see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
+				try{
+					// Print to console stdout
+					print('hello world') 
+					
+					// Write to wso2carbon.log
+					var log = mc.getServiceLog()
+					log.info('hello world')
+
+					// Set message payload for response
+					mc.setPayloadJSON('{"Message" : "hello world"}')
+					
+					// Set a property to be used as a HTTP header on the response
+					mc.setProperty('myMessage', 'hello world')
+
+				}
+				catch (err){
+					// Set a custom property that can be checked outside the JS code to indicate a JS exception
+					mc.setProperty('JSError','true')
+
+					// Print the value of the exception to the shell console
+					print('caughtException: ' + err.toString())  
+
+					// Log the exception in the wso2carbon.log
+					var log = mc.getServiceLog()
+					log.info('caughtException: ' + err.toString()) 
+
+					// Return the JS exception as the payload
+					var myExceptionPayload = { 'caughtException' : err.toString() }
+					mc.setPayloadJSON(myExceptionPayload)
+				}
+				]]>
+
+			</script>
+
+			<!-- If there was an exception during JS processing, then:
+				return:
+			 		HTTP SC 500 Internal Server Error,
+			 	 else:
+			 	 	return 200 OK
+			 	https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html -->
+	        <filter regex="true"
+			    source="$ctx:JSError = 'true'" >
+			   	<then>
+			   		<property name="HTTP_SC" value="500" scope="axis2"/>
+			    </then>
+			    <else>
+					<property name="HTTP_SC" value="200" scope="axis2"/>
+			    </else>
+	        </filter>
+
+	        <!-- Create a custom HTTP response header called "CustomHeaderWithMessage" and use the value of the property set in the JS as the value for the header -->
+			<header name="CustomHeaderWithMessage" expression="$ctx:myMessage" scope="transport"/>
+
+	        <!-- Set the HTTP Content-Type header on the response message, so the client can interpret the type of response it receives,
+	        	see https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html -->
+			<header name="Content-Type" value="application/json; charset=utf-8" scope="transport" />
+
+			<!-- WSO2 needs this to know to translate the "internal" message format into a JSON format during the Message Formatter step,
+				see https://docs.wso2.com/display/ESB490/Working+with+Message+Builders+and+Formatters -->
+			<property name="messageType" value="application/json" scope="axis2"/>
+
+			<!-- Ensure the response payload is returned to the client, not just the headers, 
+				see https://docs.wso2.com/display/ESB490/HTTP+Transport+Properties#HTTPTransportProperties-NO_ENTITY_BODY-->
+			<property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+
+			<!-- Send a HTTP response back to the client which sent the HTTP request, see https://docs.wso2.com/display/ESB490/Respond+Mediator -->
+			<respond/>
+
+		</inSequence>
+
+		<outSequence>
+		</outSequence>
+
+		<faultSequence>
+
+			<!-- Set HTTP SC to 500 Internal Server Error, see https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html -->
+			<property name="HTTP_SC" value="500" scope="axis2"/>
+
+			<!-- Send a HTTP response back to the client which sent the HTTP request, see https://docs.wso2.com/display/ESB490/Respond+Mediator -->
+			<respond/> 
+
+		</faultSequence>
+	</resource>
+
+</api>
